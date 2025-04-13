@@ -15,7 +15,6 @@ provides=("${_pkgbase}")
 options=('!strip')
 makedepends=(
   'c-ares'
-  'ccache'
   'cmake'
   'git'
   'go'
@@ -41,16 +40,23 @@ prepare() {
 }
 
 build() {
-  GO_TAGS="stablediffusion tts p2p"
-
   cd "${srcdir}/${_pkgname}-${pkgver}"
   export CXXFLAGS+="$CXXFLAGS -fcf-protection=none"
-  BUILD_TYPE=hipblas make build -j"$(nproc)"
+  export CC=/opt/rocm/llvm/bin/clang
+  export CXX=/opt/rocm/llvm/bin/clang++
+  make \
+    BUILD_TYPE=hipblas \
+    CMAKE_POLICY_VERSION_MINIMUM=3.5 \
+    GO_TAGS="stablediffusion tts p2p" \
+    VERSION="v${pkgver}" \
+    build -j"$(nproc)"
 }
 
 package() {
   cd "${srcdir}/${_pkgname}-${pkgver}"
   install -Dm775 "${_pkgbase}" -t "${pkgdir}/usr/bin/"
+  install -Dm644 LICENSE \
+    -t "${pkgdir}/usr/share/licenses/${_pkgbase}"
 
   install -D -m644 "${srcdir}/${_pkgbase}.conf" \
     "${pkgdir}/etc/${_pkgbase}/${_pkgbase}.conf"

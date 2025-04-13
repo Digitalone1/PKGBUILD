@@ -15,7 +15,6 @@ provides=("${_pkgbase}")
 options=('!strip')
 makedepends=(
   'c-ares'
-  'ccache'
   'cmake'
   'git'
   'go'
@@ -40,18 +39,25 @@ prepare() {
 }
 
 build() {
-  GO_TAGS="stablediffusion tts p2p"
-
   cd "${srcdir}/${_pkgname}-${pkgver}"
+  
   export CUDA_HOME="/opt/cuda"
   export PATH="$CUDA_HOME/bin:$PATH"
-  BUILD_TYPE=cublas CUDA_LIBPATH=/opt/cuda/targets/x86_64-linux/lib \
-    make build -j"$(nproc)"
+
+  make \
+    BUILD_TYPE=cublas \
+    CMAKE_POLICY_VERSION_MINIMUM=3.5 \
+    CUDA_LIBPATH=/opt/cuda/targets/x86_64-linux/lib \
+    GO_TAGS="stablediffusion tts p2p" \
+    VERSION="v${pkgver}" \
+    build -j"$(nproc)"
 }
 
 package() {
   cd "${srcdir}/${_pkgname}-${pkgver}"
   install -Dm775 "${_pkgbase}" -t "${pkgdir}/usr/bin/"
+  install -Dm644 LICENSE \
+    -t "${pkgdir}/usr/share/licenses/${_pkgbase}"
 
   install -D -m644 "${srcdir}/${_pkgbase}.conf" \
     "${pkgdir}/etc/${_pkgbase}/${_pkgbase}.conf"
