@@ -12,7 +12,6 @@ depends=('openblas')
 options=('!strip')
 makedepends=(
   'c-ares'
-  'ccache'
   'cmake'
   'git'
   'go'
@@ -37,15 +36,20 @@ prepare() {
 }
 
 build() {
-  GO_TAGS="stablediffusion tts p2p"
-
   cd "${srcdir}/${_pkgname}-${pkgver}"
-  BUILD_TYPE=openblas make build -j"$(nproc)"
+  make \
+    CMAKE_POLICY_VERSION_MINIMUM=3.5 \
+    GO_TAGS="stablediffusion tts p2p" \
+    BUILD_TYPE=openblas \
+    VERSION="v${pkgver}" \
+    build -j"$(nproc)"
 }
 
 package() {
   cd "${srcdir}/${_pkgname}-${pkgver}"
   install -Dm775 "${pkgname}" -t "${pkgdir}/usr/bin/"
+  install -Dm644 LICENSE \
+    -t "${pkgdir}/usr/share/licenses/${pkgname}"
 
   install -D -m644 "${srcdir}/${pkgname}.conf" \
     "${pkgdir}/etc/${pkgname}/${pkgname}.conf"
