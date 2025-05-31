@@ -1,0 +1,46 @@
+# Maintainer: robertfoster
+
+pkgname=ggml-vulkan
+pkgver=r1898.dddef73
+pkgrel=1
+pkgdesc="Tensor library for machine learning (with Vulkan GPU optimizations)"
+arch=('armv7h' 'aarch64' 'x86_64')
+url="https://github.com/ggml-org/ggml"
+license=("MIT")
+depends=('vulkan-driver' 'vulkan-icd-loader')
+makedepends=(
+  'cmake'
+  'git'
+  'shaderc'
+  'vulkan-headers'
+)
+conflicts=('ggml' 'libggml')
+provides=('ggml' 'libggml')
+_commit=dddef738b2d5a95323188ed019877d4e20568b7e
+source=("${pkgname}::git+${url}#commit=${_commit}")
+
+pkgver() {
+  cd "${srcdir}/${pkgname}"
+
+  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+}
+
+build() {
+  cmake \
+    -B "${srcdir}/build" \
+    -S "${srcdir}/${pkgname}" \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DGGML_VULKAN=1
+
+  cmake --build build
+}
+
+package() {
+  DESTDIR="${pkgdir}" cmake --install "${srcdir}/build"
+
+  install -Dm644 "${srcdir}/${pkgname}/LICENSE" \
+    -t "${pkgdir}/usr/share/licenses/${pkgname}"
+}
+
+sha256sums=('SKIP')
